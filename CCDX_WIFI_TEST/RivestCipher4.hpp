@@ -1,10 +1,10 @@
 /**
- * @file rivest_cipher_4.hpp
+ * @file RivestCipher4.hpp
  * @date 05.04.2023
  * @author RMSHE
  *
  * < GasSensorOS >
- * Copyright(C) 2023 RMSHE. All rights reserved.
+ * Copyright(C) 2024 RMSHE. All rights reserved.
  *
  * This program is free software : you can redistribute it and /or modify
  * it under the terms of the GNU Affero General Public License as

@@ -1,4 +1,28 @@
-﻿#include <iostream>
+﻿/**
+ * @file CCDX_WIFI_TEST.cpp
+ * @date 20.03.2024
+ * @author RMSHE
+ *
+ * < GasSensorOS >
+ * Copyright(C) 2024 RMSHE. All rights reserved.
+ *
+ * This program is free software : you can redistribute it and /or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.If not, see < https://www.gnu.org/licenses/>.
+ *
+ * Electronic Mail : asdfghjkl851@outlook.com
+ */
+
+#include <iostream>
 #include "WebRequests.hpp"
 #include "UsernameGenerator.hpp"
 #include "DictionaryIndexer.hpp"
@@ -18,7 +42,7 @@ private:
     // 用户名列表的生成时在增量随机模式下时可用, 随机递减值的最大值通过这个参数传递
     uint64_t maxDecrement;
 
-    // 尝试的用户名数量(生成用户名是数量)
+    // 尝试的用户名数量(生成用户名的数量)
     uint16_t amount;
 
     // 用户名尝试范围(最小最大值,运营商注册的账号有数字递增的特点,因此根据已知的两个有效用户名顺序生成中间用户名是一个简洁有效的方法)
@@ -34,7 +58,7 @@ private:
     uint32_t pwdTryNum;
 
 public:
-    // 构造函数: 初始化参数
+    // 构造函数: 初始化测试参数
     WIFI_Test(std::string gen_mode = "ir",
               uint64_t maxDecrement = 8,
               const uint16_t amount = 1000,
@@ -116,11 +140,13 @@ private:
 };
 
 int main() {
-    tl.displayInfo();
+    tl.displayInfo();       // 显示版本信息
 
-    WIFI_Test test;
+    tl.displayDictionary(); // 显示字典内容
 
-    test.runTests();
+    WIFI_Test test;     // 初始化测试参数
+
+    test.runTests();    // 运行测试
 
     system("pause");
     return 0;
