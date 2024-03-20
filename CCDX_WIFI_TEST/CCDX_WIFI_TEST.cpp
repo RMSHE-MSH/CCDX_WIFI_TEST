@@ -48,14 +48,14 @@ private:
     // 用户名尝试范围(最小最大值,运营商注册的账号有数字递增的特点,因此根据已知的两个有效用户名顺序生成中间用户名是一个简洁有效的方法)
     uint64_t minNum, maxNum;
 
+    // 密码尝试次数(从密码字典中抽取密码进行尝试的次数)
+    uint32_t pwdTryNum;
+
     // 用户名前缀(取决于运营商)
     std::string usernamePrefix;
 
     // 账户初始密码(取决于运营商,值得一试!)
     std::string initialPassword;
-
-    // 密码尝试次数(从密码字典中抽取密码进行尝试的次数)
-    uint32_t pwdTryNum;
 
 public:
     // 构造函数: 初始化测试参数
@@ -64,17 +64,17 @@ public:
               const uint16_t amount = 1000,
               const uint64_t minNum = 8143086109,
               const uint64_t maxNum = 9390026092,
+              uint32_t pwdTryNum = 100,
               const std::string &usernamePrefix = "043111",
-              const std::string &initialPassword = "000000",
-              uint32_t pwdTryNum = 100) :
+              const std::string &initialPassword = "000000") :
         gen_mode(gen_mode),
         maxDecrement(maxDecrement),
         amount(amount),
         minNum(minNum),
         maxNum(maxNum),
+        pwdTryNum(pwdTryNum),
         usernamePrefix(usernamePrefix),
-        initialPassword(initialPassword),
-        pwdTryNum(pwdTryNum) {}
+        initialPassword(initialPassword) {}
 
     // 开始执行WIFI账户的有效性测试。
     void runTests() {
