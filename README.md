@@ -86,11 +86,11 @@ CCDX-WIFI账号密码测试程序，这是目前为长春大学校园网开发�
 
 为了确保密码字典能够被本程序有效地导入并应用，我们设计了一个简单导入流程，适用于程序的不同运行方式。具体的导入步骤取决于您运行程序的方式，以下为两种常见场景的导入指导：
 
-1. **直接运行已编译好的可执行文件**：首先，需要将您的密码字典文件重命名为`Dictionary.csv`。随后，把重命名后的文件放置于本程序的可执行文件所在的根目录下。这样，当程序运行时，它会自动寻找并加载这个根目录下的`Dictionary.csv`文件，从而实现密码字典的导入。
+- **直接运行已编译好的可执行文件**：首先，需要将您的密码字典文件重命名为`Dictionary.csv`。随后，把重命名后的文件放置于本程序的可执行文件所在的根目录下。这样，当程序运行时，它会自动寻找并加载这个根目录下的`Dictionary.csv`文件，从而实现密码字典的导入。
 
 ![import_dictionary_exe](./IMG/import_dictionary_exe.png)
 
-1. **通过Visual Studio 2022进行Debug时**：在这种开发环境下，您同样需要将密码字典文件重命名为`Dictionary.csv`。然而，与直接运行可执行文件不同，您应将这个重命名后的文件放入项目目录中——即源代码文件(`.cpp`、`.hpp`等)所在的目录。这一步骤确保了，在使用Visual Studio进行调试时，程序能够正确地找到并加载密码字典。
+- **通过Visual Studio 2022进行Debug时**：在这种开发环境下，您同样需要将密码字典文件重命名为`Dictionary.csv`。然而，与直接运行可执行文件不同，您应将这个重命名后的文件放入项目目录中——即源代码文件(`.cpp`、`.hpp`等)所在的目录。这一步骤确保了，在使用Visual Studio进行调试时，程序能够正确地找到并加载密码字典。
 
 ![import_dictionary_debug](./IMG/import_dictionary_debug.png)
 
@@ -156,6 +156,41 @@ int main() {
 ```
 
 自定义测试参数允许用户针对特定的测试需求调整测试的细节和覆盖范围，使得WIFI账户的有效性测试过程更加灵活。通过合理选择和配置这些参数，可以有效地提升测试效率和成功率。
+
+---
+## 5. 主要工作原理
+
+本节旨在阐述 `CCDX WIFI TEST` 程序的主要工作原理。该程序由三个核心组件构成：`UsernameGenerator`（用户名生成模块）、`DictionaryIndexer`（字典索引模块）以及`WebRequests`（网络请求模块）。此外，程序还包含若干辅助功能模块，如 `RivestCipher4`（RC4加密模块）和 `CSV_Operations`（CSV文件操作模块）等。
+
+### 5.1 执行一次登录操作的流程
+
+为了实现对 CCDX-WIFI 的登录，假定我们已经拥有了一个有效的用户名 `username` 和密码 `password`。登录过程主要包括以下几个步骤：
+
+1. **获取当前时间戳**：首先，程序会获取当前的时间戳，记为 `timestamp`。这一步是确保请求的时效性的关键。
+
+2. **密码加密**：程序使用 RC4 加密算法，并以 `timestamp` 作为密钥，对登录密码 `password` 进行加密，得到加密后的密码 `encryptedPassword`。这一过程增加了密码传输的安全性。
+
+3. **构建登录请求数据**：接着，程序构建登录请求的数据结构。该数据结构包括操作码（表示进行登录操作）、用户名、加密后的密码、是否记住密码的标志，以及用于验证请求时效性的时间戳。
+
+```C++
+cpr::Payload payload{
+     {"opr", "pwdLogin"},          // 操作码，标识进行登录操作。
+     {"userName", username},       // 登录所用的用户名。
+     {"pwd", encryptedPassword},   // 经RC4算法加密后的密码。
+     {"rememberPwd", "1"},         // 是否记住密码，此处默认为"1"，表示告知系统记住密码。
+     {"auth_tag", timestamp}       // 时间戳，用于验证请求的时效性（注意：此时间戳需与加密密码所用时间戳一致）。
+};
+```
+
+4. **发送登录请求**：随后，程序以构建好的登录数据向服务器发送登录（POST）请求。请求的 URL 和 HTTP 头部信息如下所示：
+
+   - URL: `"http://1.1.1.2/ac_portal/login.php"`
+   - HTTP头部信息：`{"User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36"}`
+
+5. **解析服务器响应**：最后，程序解析服务器的响应数据，判断登录操作是否成功。
+
+   - 成功的响应示例：`{"success":true, "msg":"logon success", "action":"location", "pop":0, "userName":"0431219790045971", "location":"http://1.1.1.2/homepage/mobile_detail.html"}`
+   - 失败的响应示例：`{"success":false, "msg":"鐢ㄦ埛鍚嶆垨瀵嗙爜閿欒", "action":"location", "pop":0, "userName":"0431119390025542", "location":""}`
 
 ---
 

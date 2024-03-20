@@ -62,4 +62,25 @@ public:
         std::cout << "\n以上是读取到的字典文件内容.\n" << std::endl;
         system("pause");
     }
+
+    // 随机延时: 爬虫延时机制，接受两个参数：最小延时时间和最大延时时间（单位：毫秒）
+    void randomDelay(uint16_t minDelayMs, uint16_t maxDelayMs) {
+        // 检查最小和最大延时值是否合理
+        if (minDelayMs > maxDelayMs) {
+            std::cerr << "最小延时值不能大于最大延时值。" << std::endl;
+            return;
+        }
+
+        // 创建随机数生成器，使用随机设备来提供种子
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        // 定义一个范围在minDelayMs到maxDelayMs之间的均匀分布
+        std::uniform_int_distribution<> distrib(minDelayMs, maxDelayMs);
+
+        // 生成一个随机延时值
+        uint16_t delay = distrib(gen);
+
+        // 实现延时
+        std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+    }
 };

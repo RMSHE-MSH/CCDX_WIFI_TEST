@@ -129,6 +129,9 @@ public:
 
                 // 如果密码已被全部抽取完,则结束循环
                 if (currentPassword == "") break;
+
+                // 随机延时;
+                tl.randomDelay(0, 1000);
             }
         }
     }
