@@ -12,8 +12,17 @@ CCDX-WIFI账号密码测试程序，这是目前为长春大学校园网开发�
 - **用户名生成**：利用账号数字递增的特点，通过已知的两个有效用户名顺序生成中间用户名，这是一个简洁且有效的方法。支持随机模式、顺序模式及增量随机模式，满足不同的测试需求。
 - **密码字典**：集成字典管理功能，从本地字典文件中随机不重复地抽取密码进行登录尝试，确保测试全面覆盖常见的弱密码组合。
 - **实时反馈机制**：在每次登录尝试中，程序提供即时反馈信息，包括当前尝试的用户名、密码及有效账户的统计数据，实现测试过程的透明化。
-- **有效账号追踪**：一旦发现有效的用户名密码组合，程序自动保存至CSV文件中。
+- **有效账号追踪**：程序在发现有效的用户名和密码组合后，会自动将其保存至CSV文件。此外，为提高测试效率和节约请求资源，程序在下次启动时会在生成用户名列表阶段自动排除已验证的有效账户，避免重复测试。
 - **测试高效性**：本项目采用C++20标准编写，并通过优化测试流程、数据结构和数据流，尽可能提高代码运行效率。当前唯一限制测试速度的因素是网络延迟和服务器响应速度。
+
+---
+
+## 3. 更新记录
+
+| 更新日期   | 版本号                | 主要更新内容                                                 |
+| ---------- | --------------------- | ------------------------------------------------------------ |
+| 2024.03.20 | Beta.2024.03.20.Mark0 | `first publish`                                              |
+| 2024.03.21 | Beta.2024.03.21.Mark0 | **1.** 调整测试参数默认值, 提高测试效率.<br/>**2. **更新`有效账号追踪`功能, 程序在生成用户名列表阶段自动排除已验证的有效账户, 避免重复测试. |
 
 ---
 
@@ -27,11 +36,11 @@ CCDX-WIFI账号密码测试程序，这是目前为长春大学校园网开发�
 
 | 数据类型   | 测试参数名        | 描述                                                         | 默认值       |
 | ---------- | ----------------- | ------------------------------------------------------------ | ------------ |
-| `string`   | `gen_mode`        | 指定用户名列表的生成模式：<br>`"r"`：随机模式<br>`"s"`：顺序模式<br>`"ir"`：增量随机模式 | `"ir"`       |
+| `string`   | `gen_mode`        | 指定用户名列表的生成模式：<br>`"r"`：随机模式<br>`"s"`：顺序模式<br>`"ir"`：增量随机模式 | `"s"`        |
 | `uint64_t` | `maxDecrement`    | 在增量随机模式下有效，指定生成用户名时随机递减值的最大限度   | `8`          |
 | `uint16_t` | `amount`          | 指定生成的用户名数量                                         | `1000`       |
 | `uint64_t` | `minNum`          | 设置用户名尝试范围的最小值                                   | `8143086109` |
-| `uint64_t` | `maxNum`          | 设置用户名尝试范围的最大值                                   | `9390026092` |
+| `uint64_t` | `maxNum`          | 设置用户名尝试范围的最大值                                   | `9975813272` |
 | `string`   | `usernamePrefix`  | 指定用户名前缀(取决于运营商规则)                             | `"043111"`   |
 | `string`   | `initialPassword` | 设置账户的初始密码(取决于校园网的默认配置)                   | `"000000"`   |
 | `uint32_t` | `pwdTryNum`       | 指定密码尝试次数，即对于一个用户名从密码字典中抽取密码进行尝试的次数 | `100`        |
@@ -124,22 +133,22 @@ int main() {
 构造函数参数的定义如下：
 
 ```c++
-WIFI_Test(std::string gen_mode = "ir",                           // 用户名列表生成模式
-          uint64_t maxDecrement = 8,                             // 生成用户名时随机递减值的最大限度
-          const uint16_t amount = 1000,                          // 需生成的用户名数量
-          const uint64_t minNum = 8143086109,                    // 用户名尝试范围的最小值
-          const uint64_t maxNum = 9390026092,                    // 用户名尝试范围的最大值
-          uint32_t pwdTryNum = 100,                              // 密码尝试次数
-          const std::string &usernamePrefix = "043111",          // 用户名前缀
-          const std::string &initialPassword = "000000") :       // 账户的初始密码
-    gen_mode(gen_mode),
-    maxDecrement(maxDecrement),
-    amount(amount),
-    minNum(minNum),
-    maxNum(maxNum),
-    pwdTryNum(pwdTryNum),
-    usernamePrefix(usernamePrefix),
-    initialPassword(initialPassword) {}
+    WIFI_Test(std::string gen_mode = "s",                       // 用户名列表生成模式
+              uint32_t pwdTryNum = 100,                         // 密码尝试次数
+              const uint16_t amount = 1000,                     // 需生成的用户名数量
+              const uint64_t minNum = 8143086109,               // 用户名尝试范围的最小值
+              const uint64_t maxNum = 9975813272,               // 用户名尝试范围的最大值
+              uint64_t maxDecrement = 8,                        // 生成用户名时随机递减值的最大限度
+              const std::string &usernamePrefix = "043111",     // 用户名前缀
+              const std::string &initialPassword = "000000") :  // 账户的初始密码
+        gen_mode(gen_mode),
+        pwdTryNum(pwdTryNum),
+        amount(amount),
+        minNum(minNum),
+        maxNum(maxNum),
+        maxDecrement(maxDecrement),
+        usernamePrefix(usernamePrefix),
+        initialPassword(initialPassword) {}
 ```
 
 以下代码示例展示了如何根据自定义参数创建`WIFI_Test`实例并执行测试：

