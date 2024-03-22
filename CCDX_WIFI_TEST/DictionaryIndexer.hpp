@@ -39,6 +39,87 @@ private:
     std::vector<std::string> _passwordDictionary;       // (vector可以更高效的抽取密码)
 
 public:
+    /**
+     * 检查无效账号数据结构中给定用户名下的密码是否存在。
+     *
+     * @param username 用户名，作为查找的键。
+     * @param password 需要检查是否存在的密码。
+     * @return bool 返回true如果密码存在于指定用户名下，否则返回false(如果用户名不存在则直接返回false)。
+     */
+    bool isInvalidAccountsExists(const std::string &username, const std::string &password) {
+        // 使用find方法尝试找到用户名
+        auto userIt = invalidAccounts.find(username);
+        if (userIt != invalidAccounts.end()) {
+            // 如果找到用户名，再使用find方法检查密码是否存在
+            return userIt->second.find(password) != userIt->second.end();
+        }
+        // 如果用户名不存在，或密码不在对应的集合中，返回false
+        return false;
+    }
+
+    /**
+     * 尝试将给定的用户名和密码添加到无效账户数据结构中。
+     * 如果用户名不存在，则新增该用户名及其对应的密码。
+     * 如果用户名已存在，但密码不在对应的密码集合中，也将其添加, 若密码已存在，则不会重复添加(用户名和密码都不会重复)。
+     *
+     * @param username 用户名
+     * @param password 密码
+     */
+    bool addInvalidAccount(const std::string &username, const std::string &password) {
+        // 通过insert操作的返回值判断密码是否成功添加
+        auto [_, inserted] = invalidAccounts[username].insert(password);
+
+        // 返回密码是否成功添加
+        return inserted;
+    }
+
+    /**
+     * 将无效账户（用户名和密码集合）保存到CSV文件中。
+     * 这个函数将invalidAccounts转换成适合writeToCSV函数的格式，并调用它。
+     * 文件格式规定为：每行的第一列是用户名，随后的列为对应的密码集合。
+     *
+     * @param filePath 要追加的CSV文件路径
+     */
+    void saveInvalidAccounts(const std::string &filePath = "./InvalidAccounts.csv") {
+        // 存储转换后的数据
+        std::vector<std::vector<std::string>> csvData;
+
+        // 遍历每个账户和对应的密码集合，转换成CSV行格式
+        for (const auto &[username, passwords] : invalidAccounts) {
+            std::vector<std::string> row; // 存储一行数据，包括用户名和密码
+            row.reserve(passwords.size() + 1); // 预留空间，提高效率
+            row.push_back(username); // 首列添加用户名
+            for (const auto &password : passwords) row.push_back(password);// 添加密码
+            csvData.push_back(std::move(row)); // 添加到csvData，使用std::move减少拷贝
+        }
+
+        CSV_Operations csv_op; // 创建CSV操作对象
+
+        // 调用writeToCSV函数，将数据覆盖到CSV文件
+        csv_op.writeToCSV(csvData, filePath, "w");
+    }
+
+    /**
+     * 从InvalidAccounts.csv文件中读取无效账户信息。
+     * @param filePath CSV文件路径
+     */
+    void readInvalidAccounts(const std::string &filePath = "./InvalidAccounts.csv") {
+        CSV_Operations csv_op; // 创建CSV操作对象
+
+        // 从CSV文件中读取数据
+        auto csvData = csv_op.readFromCSV(filePath);
+
+        // 遍历读取到的每一行数据
+        for (const auto &row : csvData) {
+            if (!row.empty()) { // 确保行数据不为空
+                const auto &username = row.front(); // 第一个元素作为用户名
+                for (size_t i = 1; i < row.size(); ++i) { // 遍历余下的每个元素（密码）
+                    addInvalidAccount(username, row[i]);  // 尝试将给定的用户名和密码添加到无效账户数据结构中。
+                }
+            }
+        }
+    }
+
     // 从EffectiveAccount.csv文件中读取有效账户(unordered_map数据类型能够避免用户名重复的问题)。
     std::unordered_map<std::string, std::string> readEffectiveAccount(const std::string &filePath = "./EffectiveAccount.csv") {
         CSV_Operations csv_op; // 创建CSV操作对象

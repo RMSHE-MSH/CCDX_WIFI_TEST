@@ -35,14 +35,19 @@ public:
      * 将数据追加写入CSV文件。如果文件存在，则在文件末尾追加新内容；如果文件不存在，则创建文件。
      * @param data 待写入的数据，每个内部向量代表一行，内部向量的每个元素代表一个字段。
      * @param filePath CSV文件的路径。
+     * @param writeMode 文件写入模式
      */
-    void appendToCSV(const std::vector<std::vector<std::string>> &data, const std::string &filePath) {
-        // 使用文件输出流打开文件，设置为追加模式。
-        std::ofstream outFile(filePath, std::ios::app);
+    void writeToCSV(const std::vector<std::vector<std::string>> &data, const std::string &filePath, const std::string &writeMode = "a") {
+        // 设置文件打开模式
+        std::ios_base::openmode mode = std::ios::app; // 默认为追加模式
+        if (writeMode == "w") mode = std::ios::out; // 设置为覆盖模式
+
+        // 使用文件输出流打开文件，设置模式。
+        std::ofstream outFile(filePath, mode);
 
         // 检查文件是否成功打开。
         if (!outFile.is_open()) {
-            std::cerr << "[appendToCSV] Unable to open file：" << filePath << std::endl;
+            std::cerr << "[writeToCSV] Unable to open file：" << filePath << std::endl;
             return;
         }
 

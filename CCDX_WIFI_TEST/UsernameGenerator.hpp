@@ -83,7 +83,7 @@ public:
         // 从生成的用户名列表中过滤掉已验证的有效用户名
         filterEffectiveUsernames();
 
-        //将用户名列表从unordered_set(无序集合)数据类型复制到vector(向量)数据类型, 因为从vector用户名列表抽取密码时速度会更快;
+        //将用户名列表从unordered_set(无序集合)数据类型复制到vector(向量)数据类型, 因为从vector用户名列表抽取用户名时速度会更快;
         copyUsernamesList();
 
         //返回用户名列表;
