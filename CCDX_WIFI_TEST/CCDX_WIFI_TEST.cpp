@@ -57,14 +57,14 @@ private:
 
 public:
     // 构造函数: 初始化测试参数
-    WIFI_Test(std::string gen_mode = "s",                       // 用户名列表生成模式
-              uint32_t pwdTryNum = 100,                         // 密码尝试次数
-              const uint16_t amount = 1000,                     // 需生成的用户名数量
-              const uint64_t minNum = 8143086109,               // 用户名尝试范围的最小值
-              const uint64_t maxNum = 9975813272,               // 用户名尝试范围的最大值
-              uint64_t maxDecrement = 8,                        // 生成用户名时随机递减值的最大限度
-              const std::string &usernamePrefix = "043111",     // 用户名前缀
-              const std::string &initialPassword = "000000") :  // 账户的初始密码
+    explicit WIFI_Test(std::string gen_mode = "s",                       // 用户名列表生成模式
+                       uint32_t pwdTryNum = 100,                         // 密码尝试次数
+                       const uint16_t amount = 1000,                     // 需生成的用户名数量
+                       const uint64_t minNum = 8143086109,               // 用户名尝试范围的最小值
+                       const uint64_t maxNum = 9975813272,               // 用户名尝试范围的最大值
+                       uint64_t maxDecrement = 8,                        // 生成用户名时随机递减值的最大限度
+                       const std::string &usernamePrefix = "043111",     // 用户名前缀
+                       const std::string &initialPassword = "000000") :  // 账户的初始密码
         gen_mode(gen_mode),
         pwdTryNum(pwdTryNum),
         amount(amount),
@@ -92,7 +92,9 @@ public:
         dic.readInvalidAccounts();
 
         // 获取有效账户的数目
-        effectiveAccountAmount = dic.effectiveAccountCount();
+        size_t effectiveAccountAmount = dic.effectiveAccountCount();
+
+        size_t usernamesListAmount = ug.usernamesListCount();
 
         while (true) {
             // 从用户名列表中抽取用户名
@@ -119,7 +121,7 @@ public:
                 // 如果密码已被全部抽取完,则结束循环
                 if (currentPassword == "") break;
 
-                std::cout << "\r当前用户名(" << usernameNum << "/" << amount << "):" << currentUsername <<
+                std::cout << "\r当前用户名(" << usernameNum << "/" << usernamesListAmount << "):" << currentUsername <<
                     "\t当前密码(" << i << "/" << ((expectedValidPwdCount > pwdTryNum) ? pwdTryNum : expectedValidPwdCount) << "):" << currentPassword << "                ";
 
                 WebRequests re(currentUsername, currentPassword);
@@ -151,7 +153,6 @@ private:
     uint32_t usernameNum = 0;                       // 用于记录已经尝试过的用户名数目;
     uint32_t effectiveAccountNum = 0;               // 用于记录有效账户数;
     std::string currentUsername, currentPassword;   // 当前正在尝试的用户名和密码;
-    uint32_t effectiveAccountAmount;                // 保存在EffectiveAccount.csv文件中的已验证的有效账户数目;
 };
 
 int main() {

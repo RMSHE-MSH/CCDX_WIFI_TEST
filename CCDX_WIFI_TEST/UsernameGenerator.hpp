@@ -115,6 +115,9 @@ public:
         }
     }
 
+    // 获取用户名列表向量的用户名个数;
+    size_t usernamesListCount() { return _usernamesList.size(); }
+
 private:
     // 随机模式: 在范围内生成一个新的随机用户名(随机用户名不会重复)
     std::string randomGenerate() {
