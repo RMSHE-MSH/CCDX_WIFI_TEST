@@ -32,10 +32,10 @@
 class CSV_Operations {
 public:
     /**
-     * 将数据追加写入CSV文件。如果文件存在，则在文件末尾追加新内容；如果文件不存在，则创建文件。
+     * 将数据写入CSV文件。如果文件不存在，则创建文件。
      * @param data 待写入的数据，每个内部向量代表一行，内部向量的每个元素代表一个字段。
      * @param filePath CSV文件的路径。
-     * @param writeMode 文件写入模式
+     * @param writeMode 文件写入模式, "a":追加模式(在文件末尾追加新内容), "w":覆盖模式;
      */
     void writeToCSV(const std::vector<std::vector<std::string>> &data, const std::string &filePath, const std::string &writeMode = "a") {
         // 设置文件打开模式

@@ -38,7 +38,7 @@ private:
     std::unordered_set<std::string> passwordDictionary; // (unordered_set可以保证密码不重复)
     std::vector<std::string> _passwordDictionary;       // (vector可以更高效的抽取密码)
 
-public:
+private:
     /**
      * 检查无效账号数据结构中给定用户名下的密码是否存在。
      *
@@ -57,6 +57,17 @@ public:
         return false;
     }
 
+    // 获取对应用户名的无效密码数目
+    size_t invalidPasswordCount(const std::string &username) {
+        size_t invalidPasswordCount = 0;
+        if (invalidAccounts.find(username) != invalidAccounts.end()) {
+            invalidPasswordCount = invalidAccounts[username].size();
+        }
+
+        return invalidPasswordCount;
+    }
+
+public:
     /**
      * 尝试将给定的用户名和密码添加到无效账户数据结构中。
      * 如果用户名不存在，则新增该用户名及其对应的密码。
@@ -136,18 +147,41 @@ public:
         return effectiveAccount;
     }
 
-    // 复制密码字典: 将密码字典从unordered_set(无序集合)数据类型复制到vector(向量)数据类型, 因为从vector密码字典抽取密码时速度会更快;
-    void copyPasswordDictionary() {
-        // 预先分配足够的空间，以避免在复制过程中的多次内存分配
-        _passwordDictionary.reserve(passwordDictionary.size());
+    // 复制密码字典(重置密码字典向量): 将密码字典从unordered_set(无序集合)数据类型复制到vector(向量)数据类型, 因为从vector密码字典抽取密码时速度会更快;
+    void copyPasswordDictionary(const std::string &username, const std::string &initialPassword) {
+        // 判断初始密码是否有效(true:表示密码有效);
+        bool initPwdIsValid = !isInvalidAccountsExists(username, initialPassword);
+
+        // 计算预期的有效密码数量，如果初始密码有效，额外加一(在这里"+1"是因为向量末尾还需要额外容纳一个初始密码)
+        size_t expectedValidCount = passwordDictionary.size() - invalidPasswordCount(username) + (initPwdIsValid ? 1 : 0);
+
+        // 清空并释放_passwordDictionary向量空间的内存;
+        std::vector<std::string>().swap(_passwordDictionary);
+
+        // 预先分配向量空间，以容纳所有预期的有效密码，减少内存重新分配
+        _passwordDictionary.reserve(expectedValidCount);
 
         // 从passwordDictionary(数据类型为:unordered_set)拷贝到_passwordDictionary(数据类型为:vector)
-        for (const auto &password : passwordDictionary) _passwordDictionary.push_back(password);
+        for (const auto &password : passwordDictionary) {
+            // 使用isInvalidAccountsExists来检查密码是否有效(跳过无效的密码)
+            if (!isInvalidAccountsExists(username, password)) {
+                _passwordDictionary.push_back(password);
+            }
+        }
+
+        // 使用C++20范围和算法复制有效密码
+        //for (const auto &password : passwordDictionary | std::views::filter([&](const std::string &pwd) {
+        //    return !isInvalidAccountsExists(username, pwd);
+        //                                                                    })) {
+        //    _passwordDictionary.push_back(password);
+        //}
 
         // 随机化_passwordDictionary向量(使密码字典中的密码随机排序)
-        std::random_device rd;                                                       // 随机数生成器
-        std::mt19937 g(rd());                                                        // 用随机数生成器初始化Mersenne Twister引擎
-        std::shuffle(_passwordDictionary.begin(), _passwordDictionary.end(), g);     // 随机化_passwordDictionary向量
+        static std::mt19937 g(std::random_device{}());
+        std::shuffle(_passwordDictionary.begin(), _passwordDictionary.end(), g);
+
+        // 若初始密码有效，则将其添加到向量末尾(密码的抽取是从向量末尾开始的, 这样能保证在第一次抽取密码时取到的是初始密码)
+        if (initPwdIsValid) _passwordDictionary.push_back(initialPassword);
     }
 
     // 从指定的CSV文件路径读取字典数据
@@ -164,19 +198,13 @@ public:
             }
         }
 
-        // 复制密码字典:
-        copyPasswordDictionary();
-
         return passwordDictionary; // 返回密码字典;
     }
 
     // 从密码字典抽取并返回一个不重复(多次调用不重复)的字符串, 密码全部抽取完成后返回""空字符串;
     std::string extractUniquePassword() {
         // 如果向量为空，则重新复制密码字典, 并且返回一个空字符串
-        if (_passwordDictionary.empty()) {
-            copyPasswordDictionary();   // 复制密码字典:
-            return "";
-        }
+        if (_passwordDictionary.empty()) return "";
 
         // 从向量的末尾抽取一个字符串，这样可以保证效率(比循环遍历抽取每个值的速度要快得多,用内存换运行速度)
         std::string extractedPassword = _passwordDictionary.back();
@@ -190,5 +218,8 @@ public:
     std::unordered_set<std::string> getDictionary() { return passwordDictionary; }
 
     // 获取有效账户的数目
-    uint32_t getEffectiveAccountAmount() { return effectiveAccount.size(); }
+    size_t effectiveAccountCount() { return effectiveAccount.size(); }
+
+    // 获取当前用户名的预期有效密码的数目
+    size_t expectedValidPwdCount() { return _passwordDictionary.size(); }
 };
