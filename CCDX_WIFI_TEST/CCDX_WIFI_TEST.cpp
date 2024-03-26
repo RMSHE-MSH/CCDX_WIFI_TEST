@@ -34,17 +34,17 @@ CSV_Operations csv_op;
  */
 class WIFI_Test {
 private:
-    //用户名列表的生成模式("r":随机模式; "s":顺序模式; "ir":增量随机模式;)
+    //用户名列表的生成模式("r":随机模式; "s":顺序模式; "ir":增量随机模式; "m":多种子模式)
     std::string gen_mode;
 
     // 用户名列表的生成时在增量随机模式下时可用, 随机递减值的最大值通过这个参数传递
     uint64_t maxDecrement;
 
     // 尝试的用户名数量(生成用户名的数量)
-    uint16_t amount;
+    uint32_t amount;
 
-    // 用户名尝试范围(最小最大值,运营商注册的账号有数字递增的特点,因此根据已知的两个有效用户名顺序生成中间用户名是一个简洁有效的方法)
-    uint64_t minNum, maxNum;
+    // 用户名种子(允许多个种子, 在使用多种子模式时程序会以每一个种子为中心点, 并在每个中心点的附近生成新用户名);
+    std::set<uint64_t> usernamesSeed;
 
     // 密码尝试次数(从密码字典中抽取密码进行尝试的次数)
     uint32_t pwdTryNum;
@@ -55,28 +55,33 @@ private:
     // 账户初始密码(取决于运营商,值得一试!)
     std::string initialPassword;
 
+    // 爬虫随机延时: 请求延时机制, 最小延时时间和最大延时时间（单位：毫秒）
+    uint16_t minDelayMs, maxDelayMs;
+
 public:
     // 构造函数: 初始化测试参数
-    explicit WIFI_Test(std::string gen_mode = "s",                       // 用户名列表生成模式
-                       uint32_t pwdTryNum = 100,                         // 密码尝试次数
-                       const uint16_t amount = 1000,                     // 需生成的用户名数量
-                       const uint64_t minNum = 8143086109,               // 用户名尝试范围的最小值
-                       const uint64_t maxNum = 9975813272,               // 用户名尝试范围的最大值
-                       uint64_t maxDecrement = 8,                        // 生成用户名时随机递减值的最大限度
-                       const std::string &usernamePrefix = "043111",     // 用户名前缀
-                       const std::string &initialPassword = "000000") :  // 账户的初始密码
+    explicit WIFI_Test(const std::string gen_mode = "m",                                      // 用户名列表生成模式
+                       const uint32_t pwdTryNum = 100,                                        // 密码尝试次数
+                       const uint32_t amount = 100,                                           // 需生成的用户名数量
+                       const std::set<uint64_t> usernamesSeed = { 8143086109, 9390026092 },   // 用户名种子
+                       const uint64_t maxDecrement = 8,                                       // 生成用户名时随机递减值的最大限度
+                       const uint16_t minDelayMs = 0,                                         // 最小延时时间
+                       const uint16_t maxDelayMs = 0,                                         // 最大延时时间
+                       const std::string &usernamePrefix = "043111",                          // 用户名前缀
+                       const std::string &initialPassword = "000000") :                       // 账户的初始密码
         gen_mode(gen_mode),
         pwdTryNum(pwdTryNum),
         amount(amount),
-        minNum(minNum),
-        maxNum(maxNum),
+        usernamesSeed(usernamesSeed),
         maxDecrement(maxDecrement),
+        minDelayMs(minDelayMs),
+        maxDelayMs(maxDelayMs),
         usernamePrefix(usernamePrefix),
         initialPassword(initialPassword) {}
 
     // 开始执行WIFI账户的有效性测试。
     void runTests() {
-        UsernameGenerator ug(amount, minNum, maxNum, usernamePrefix);
+        UsernameGenerator ug(amount, usernamesSeed, usernamePrefix);
 
         /**
          * 生成用户名列表;
@@ -84,6 +89,9 @@ public:
          * @param maxDecrement 在增量随机模式下时可用, 随机递减值的最大值通过这个参数传递
          */
         ug.generateUsernamesList(gen_mode, maxDecrement);
+
+        // 打印 UsernameGenerator 的调试信息;
+        // ug.printDebugInfo();
 
         // 读取密码字典;
         dic.readDictionary();
@@ -141,7 +149,7 @@ public:
                 }
 
                 // 随机延时;
-                // tl.randomDelay(1000, 2000);
+                tl.randomDelay(minDelayMs, maxDelayMs);
             }
 
             // 将无效账户（用户名和密码集合）保存到CSV文件中。
@@ -160,7 +168,7 @@ int main() {
 
     //tl.displayDictionary(); // 显示字典内容
 
-    WIFI_Test test;     // 初始化测试参数
+    WIFI_Test test("m", 1, 5000, { 8143086109, 9390026092 }, 8, 0, 0);     // 初始化测试参数
 
     test.runTests();    // 运行测试
 

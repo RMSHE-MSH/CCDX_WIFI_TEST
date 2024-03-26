@@ -41,22 +41,32 @@ private:
     // 用于生成随机数的生成器
     std::mt19937 generator;
 
-    // 用户名数字的最小最大值
+    // 用户名种子的最小最大值(最小最大值,运营商注册的账号有数字递增的特点,因此根据已知的两个有效用户名顺序生成中间用户名是一个简洁有效的方法)
     uint64_t minNum, maxNum;
+
+    // 用户名种子(允许多个种子, 在使用多种子模式时程序会以每一个种子为中心点, 并在每个中心点的附近生成新用户名);
+    std::set<uint64_t> usernamesSeed;
 
     //使用顺序生成时记录当前用户名值
     uint64_t currentUsername;
 
     // 用户名生成数量
-    uint16_t amount;
+    uint32_t amount;
 
     // 用户名前缀(取决于运营商)
     std::string usernamePrefix;
 
 public:
     // 构造函数，接收最小和最大数字作为用户名范围以及用户名前缀
-    explicit UsernameGenerator(uint16_t _amount = 1000, uint64_t min = 8143086109, uint64_t max = 9390026092, std::string usernamePrefix = "043111") :
-        amount(_amount), minNum(min), maxNum(max), currentUsername(max), usernamePrefix(usernamePrefix) {
+    explicit UsernameGenerator(uint32_t _amount, std::set<uint64_t> usernamesSeed, std::string usernamePrefix) :
+        amount(_amount), usernamesSeed(usernamesSeed), usernamePrefix(usernamePrefix) {
+        // 找到usernamesSeed中的最小值
+        minNum = *usernamesSeed.begin();
+        // 找到usernamesSeed中的最大值
+        maxNum = *usernamesSeed.rbegin();
+        // 将当前用户名初始化为最大值;
+        currentUsername = maxNum;
+
         // 使用当前时间作为种子初始化随机数生成器
         unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
         generator.seed(seed);
@@ -64,20 +74,22 @@ public:
 
     /**
      * 生成用户名列表;
-     * @param gen_mode 生成模式("r":随机模式; "s":顺序模式; "ir":增量随机模式;)
+     * @param gen_mode 生成模式("r":随机模式; "s":顺序模式; "ir":增量随机模式; "m":多种子模式)
      * @param maxDecrement 在增量随机模式下时可用, 随机递减值的最大值通过这个参数传递
      * @return 返回用户名列表;
      */
     std::vector<std::string> generateUsernamesList(std::string gen_mode, uint64_t maxDecrement = 8) {
         // 判断用户名生成模式;
         if (gen_mode == "r") {
-            for (uint16_t i = 0; i < amount; ++i) randomGenerate();// 使用随机模式生成"amount"个用户名;
+            for (uint32_t i = 0; i < amount; ++i) randomGenerate();// 使用随机模式生成"amount"个用户名;
         } else if (gen_mode == "s") {
-            for (uint16_t i = 0; i < amount; ++i) sequenceGenerate();// 使用顺序模式生成"amount"个用户名;
+            for (uint32_t i = 0; i < amount; ++i) sequenceGenerate();// 使用顺序模式生成"amount"个用户名;
         } else if (gen_mode == "ir") {
-            for (uint16_t i = 0; i < amount; ++i) incrementRandomGenerate(maxDecrement);// 使用增量随机模式生成"amount"个用户名;
+            for (uint32_t i = 0; i < amount; ++i) incrementRandomGenerate(maxDecrement);// 使用增量随机模式生成"amount"个用户名;
+        } else if (gen_mode == "m") {
+            multiSeedsGenerate();// 使用多种子模式生成近"amount"个用户名;
         } else {
-            for (uint16_t i = 0; i < amount; ++i) sequenceGenerate();// 默认使用顺序模式生成"amount"个用户名;
+            multiSeedsGenerate();// 默认使用多种子模式生成近"amount"个用户名;
         }
 
         // 从生成的用户名列表中过滤掉已验证的有效用户名
@@ -118,8 +130,32 @@ public:
     // 获取用户名列表向量的用户名个数;
     size_t usernamesListCount() { return _usernamesList.size(); }
 
+public:
+    // 打印调试信息;
+    void printDebugInfo() {
+        std::cout << "为了生成" << amount << "个用户名，"
+            << "基于" << usernamesSeed.size() << "个种子，"
+            << "需要的生成半径为：" << calculateRadius() << std::endl;
+
+        std::cout << "UsernameSeeds: " << std::endl;
+        // 遍历并输出生成的用户名种子
+        int i = 0;
+        for (const auto &seed : usernamesSeed) {
+            std::cout << seed << std::endl;
+        }
+
+        std::cout << "Generated Usernames: " << std::endl;
+        // 遍历并输出生成的用户名
+        i = 0;
+        for (const auto &username : _usernamesList) {
+            std::cout << tl.removeSubstring(username, usernamePrefix) << std::endl;
+        }
+
+        system("pause");
+    }
+
 private:
-    // 随机模式: 在范围内生成一个新的随机用户名(随机用户名不会重复)
+    // [随机模式]: 在范围内生成一个新的随机用户名(随机用户名不会重复)
     std::string randomGenerate() {
         // 如果已生成的用户名数量达到最大可能数量，则抛出异常
         if (usernamesList.size() >= (maxNum - minNum - 1)) {
@@ -140,7 +176,7 @@ private:
         }
     }
 
-    // 顺序模式: 在范围内生成一个新的顺序用户名(默认从最大值递减值最小值)
+    // [顺序模式]: 在范围内生成一个新的顺序用户名(默认从最大值递减值最小值)
     std::string sequenceGenerate() {
         // 应用递减值(同时确保currentUsername不会低于minNum)
         currentUsername > minNum ? --currentUsername : currentUsername = minNum;
@@ -151,7 +187,7 @@ private:
         return usernamePrefix + std::to_string(currentUsername);
     }
 
-    // 增量随机模式: 在范围内生成一个新的增量随机用户名(数值从maxNum开始，每次调用时都会以一个随机的递减值减少，直到达到minNum。递减值的最大值将通过一个参数`maxDecrement`传递给函数。)
+    // [增量随机模式]: 在范围内生成一个新的增量随机用户名(数值从maxNum开始，每次调用时都会以一个随机的递减值减少，直到达到minNum。递减值的最大值将通过一个参数`maxDecrement`传递给函数。)
     std::string incrementRandomGenerate(uint64_t maxDecrement) {
         if (currentUsername <= minNum) {
             throw std::runtime_error("All usernames have been generated");
@@ -169,6 +205,42 @@ private:
 
         // 将currentUsername转换为字符串并加上前缀返回
         return usernamePrefix + std::to_string(currentUsername);
+    }
+
+    /**
+     * [多种子模式]
+     * 生成围绕给定种子用户名的用户名集。
+     *
+     * 本函数接受两个参数：一个包含用户名种子的向量和一个生成半径。基于每个种子用户名，
+     * 该函数在考虑避免重叠和重复的情况下，生成一个数值范围内的用户名集合。生成的用户名将
+     * 在每个种子的数值前后，根据大小顺序并平等考虑所有种子生成。
+     *
+     * @param usernamesSeed 用户名种子的向量。
+     * @param radius 指定以usernamesSeed中的用户名为中心，生成新用户名的数值半径。
+     * @return 返回生成的用户名的向量。
+     */
+    void multiSeedsGenerate() {
+        // 将有效用户名读取到用户名种子中(基于上一次运行的结果优化种子集合)
+        for (const auto &accountPair : dic.readEffectiveAccount()) {
+            // 删除有效用户名的前缀
+            std::string seed = tl.removeSubstring(accountPair.first, usernamePrefix);
+
+            // 将有效用户名从字符串转换为数字后插入到用户名种子集合中;
+            usernamesSeed.insert(std::stoll(seed));
+        }
+
+        // 计算达到预定用户名数量所需的生成半径;
+        uint32_t radius = calculateRadius();
+
+        // 遍历种子用户名列表
+        for (const auto &seed : usernamesSeed) {
+            // 在指定的数值半径内生成新用户名
+            for (uint64_t i = max(0LL, seed - radius); i <= seed + radius; ++i) {
+                // 直接将生成的用户名加上前缀插入到用户名列表中
+                // unordered_set会自动处理潜在的重复插入，保证用户名的唯一性
+                usernamesList.insert(usernamePrefix + std::to_string(i));
+            }
+        }
     }
 
     // 复制用户名列表: 将用户名列表从unordered_set(无序集合)数据类型复制到vector(向量)数据类型, 因为从vector用户名列表抽取用户名时速度会更快;
@@ -198,5 +270,29 @@ private:
             // 如果用户名不存在于usernamesList中，erase操作将不会有任何效果
             usernamesList.erase(accountPair.first);
         }
+    }
+
+    /**
+     * 计算达到预定用户名数量所需的生成半径。
+     * @param amount 预期生成的用户名总数。
+     * @param seedCount 种子用户名的数量。
+     * @return 计算出的生成半径。
+     */
+    uint32_t calculateRadius() {
+        // 统计种子数;
+        uint32_t seedCount = usernamesSeed.size();
+
+        // 检查种子数量，防止除以0的情况
+        if (seedCount <= 0) {
+            std::cerr << "种子数量必须大于0。" << std::endl;
+            return 0;
+        }
+
+        // 计算生成半径，确保结果为正整数
+        // 使用ceil来确保总数能覆盖预期的用户名总数
+        // 解方程n * (2r + 1) = amount，得到r
+        uint32_t radius = static_cast<uint32_t>(std::ceil((amount / static_cast<double>(seedCount) - 1) / 2));
+
+        return radius;
     }
 };

@@ -41,7 +41,7 @@ public:
 
     // 显示版本信息
     static void displayInfo() {
-        std::cout << "CCDX WIFI TEST - Beta.2024.03.21.Mark0" << std::endl;
+        std::cout << "CCDX WIFI TEST - Dev.2024.03.26.Mark4" << std::endl;
         std::cout << "[AuthorInfo] Powered by RMSHE" << std::endl;
         std::cout << "[OpenSource] https://github.com/RMSHE-MSH/CCDX_WIFI_TEST" << std::endl;
         std::cout << "[LICENSE] GNU AFFERO GENERAL PUBLIC LICENSE Version 3" << std::endl;
@@ -66,10 +66,7 @@ public:
     // 随机延时: 爬虫延时机制，接受两个参数：最小延时时间和最大延时时间（单位：毫秒）
     void randomDelay(uint16_t minDelayMs, uint16_t maxDelayMs) {
         // 检查最小和最大延时值是否合理
-        if (minDelayMs > maxDelayMs) {
-            std::cerr << "最小延时值不能大于最大延时值。" << std::endl;
-            return;
-        }
+        if (minDelayMs > maxDelayMs || maxDelayMs == 0) return;
 
         // 创建随机数生成器，使用随机设备来提供种子
         std::random_device rd;
@@ -82,5 +79,29 @@ public:
 
         // 实现延时
         std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+    }
+
+    /**
+     * @brief 删除字符串中的一个连续子串。
+     *
+     * @param original 原始字符串。
+     * @param toRemove 要删除的子串。
+     * @return std::string 删除指定子串后的字符串。
+     */
+    std::string removeSubstring(const std::string &original, const std::string &toRemove) {
+        // 若原始字符串或要删除的子串为空，则直接返回原始字符串
+        if (original.empty() || toRemove.empty()) {
+            return original;
+        }
+
+        std::string result = original; // 创建原始字符串的副本
+        size_t pos = result.find(toRemove); // 查找子串的起始位置
+
+        // 如果找到子串，则删除之
+        if (pos != std::string::npos) {
+            result.erase(pos, toRemove.length());
+        }
+
+        return result;
     }
 };
