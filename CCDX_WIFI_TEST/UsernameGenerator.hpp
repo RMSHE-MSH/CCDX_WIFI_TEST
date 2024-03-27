@@ -3,7 +3,7 @@
  * @date 20.03.2024
  * @author RMSHE
  *
- * < GasSensorOS >
+ * < CCDX_WIFI_TEST >
  * Copyright(C) 2024 RMSHE. All rights reserved.
  *
  * This program is free software : you can redistribute it and /or modify
@@ -53,13 +53,16 @@ private:
     // 用户名生成数量
     uint32_t amount;
 
+    // 最大无效密码尝试次数(表示一个阈值：程序将不断尝试字典中的密码，同时记录每次尝试的有效性。若某个用户名尝试的密码次数了超过此阈值次数都还没有找到有效密码，则程序将停止向该用户名尝试密码。)
+    uint16_t maxInvalidAttempts;
+
     // 用户名前缀(取决于运营商)
     std::string usernamePrefix;
 
 public:
     // 构造函数，接收最小和最大数字作为用户名范围以及用户名前缀
-    explicit UsernameGenerator(uint32_t _amount, std::set<uint64_t> usernamesSeed, std::string usernamePrefix) :
-        amount(_amount), usernamesSeed(usernamesSeed), usernamePrefix(usernamePrefix) {
+    explicit UsernameGenerator(uint32_t _amount, uint16_t maxInvalidAttempts, std::set<uint64_t> usernamesSeed, std::string usernamePrefix) :
+        amount(_amount), maxInvalidAttempts(maxInvalidAttempts), usernamesSeed(usernamesSeed), usernamePrefix(usernamePrefix) {
         // 找到usernamesSeed中的最小值
         minNum = *usernamesSeed.begin();
         // 找到usernamesSeed中的最大值
@@ -92,8 +95,8 @@ public:
             multiSeedsGenerate();// 默认使用多种子模式生成近"amount"个用户名;
         }
 
-        // 从生成的用户名列表中过滤掉已验证的有效用户名
-        filterEffectiveUsernames();
+        // 过滤用户名列表
+        filterUsernames();
 
         //将用户名列表从unordered_set(无序集合)数据类型复制到vector(向量)数据类型, 因为从vector用户名列表抽取用户名时速度会更快;
         copyUsernamesList();
@@ -256,20 +259,40 @@ private:
     }
 
     /**
-     * @brief 从生成的用户名列表中过滤掉已验证的有效用户名
+     * @brief 从生成的用户名列表中过滤掉已验证的有效用户名和尝试无效密码次数过多的用户名
      *
-     * 该函数的作用是从生成的用户名列表中排除已经在有效账户文件 (EffectiveAccount.csv) 中验证过的用户名，以提高测试的效率。
-     * 函数通过遍历 unordered_map (effectiveAccount) 中的每个元素（用户名-密码对），
-     * 并检查 unordered_set (usernamesList) 中是否包含这些用户名。如果包含，则从 usernamesList 中移除对应的用户名。
-     * 该过程利用了 unordered_set 和 unordered_map 的高效查找能力，平均时间复杂度为 O(1)，保证了整体操作的高效性。
+     * 该函数的主要目的是从一个预生成的用户名列表中移除那些已经在有效账户文件 (EffectiveAccount.csv) 中验证过，
+     * 以及尝试无效密码次数超过设定阈值（最大无效密码尝试次数）的用户名。这样做可以提高后续操作或测试的效率。
+     *
+     * 实现方式如下：
+     * 1. 首先，通过遍历有效账户映射（effectiveAccount），该映射包含用户名到密码的映射关系，
+     *    并检查预生成的用户名列表（usernamesList，一个unordered_set）中是否存在这些用户名。
+     *    如果存在，就从usernamesList中移除这些用户名。这一步骤确保了所有已验证的有效用户名被排除。
+     * 2. 然后，遍历usernamesList中剩余的用户名，使用一个辅助函数（invalidPwdCount）来获取每个用户名尝试无效密码的次数，
+     *    如果某个用户名的无效密码尝试次数超过了最大尝试次数（maxInvalidAttempts），则也将这个用户名从usernamesList中移除。
+     *    这一步骤确保了尝试无效密码次数过多的用户名被排除。
+     *
+     * 该过程充分利用了unordered_set和unordered_map的高效查找能力，平均时间复杂度为O(1)，
+     * 这保证了即使面对大量数据，整体操作的执行效率也非常高。
      */
-    void filterEffectiveUsernames() {
-        // 对有效用户名进行遍历
+    void filterUsernames() {
+        // 遍历有效账户映射，移除usernamesList中已验证的有效用户名
         for (const auto &accountPair : dic.readEffectiveAccount()) {
-            // 直接尝试从usernamesList中删除当前遍历到的用户名
-            // 如果用户名不存在于usernamesList中，erase操作将不会有任何效果
-            usernamesList.erase(accountPair.first);
+            usernamesList.erase(accountPair.first); // 尝试移除用户名，如果不存在则无操作
         }
+
+        // 创建一个临时集合来存储需要被移除的用户名，因为在遍历过程中直接修改集合可能会导致问题
+        std::unordered_set<std::string> toRemove;
+
+        // 遍历usernamesList，移除无效密码尝试次数过多的用户名
+        for (const auto &username : usernamesList) {
+            if (dic.invalidPwdCount(username) >= maxInvalidAttempts) {
+                toRemove.insert(username); // 将超过尝试次数的用户名添加到toRemove集合中
+            }
+        }
+
+        // 根据toRemove集合中的内容，从usernamesList中移除对应用户名
+        for (const auto &username : toRemove) usernamesList.erase(username);
     }
 
     /**

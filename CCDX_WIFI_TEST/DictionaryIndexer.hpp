@@ -3,7 +3,7 @@
  * @date 20.03.2024
  * @author RMSHE
  *
- * < GasSensorOS >
+ * < CCDX_WIFI_TEST >
  * Copyright(C) 2024 RMSHE. All rights reserved.
  *
  * This program is free software : you can redistribute it and /or modify
@@ -222,4 +222,15 @@ public:
 
     // 获取当前用户名的预期有效密码的数目
     size_t expectedValidPwdCount() { return _passwordDictionary.size(); }
+
+    // 获取指定用户名下的无效密码的数量
+    uint32_t invalidPwdCount(const std::string &username) {
+        // 尝试在无效账户数据结构中查找指定的用户名
+        auto it = invalidAccounts.find(username);
+        // 如果找到，则返回对应的无效密码的数量
+        if (it != invalidAccounts.end()) return it->second.size();
+
+        // 如果未找到指定的用户名，返回0
+        return 0;
+    }
 };

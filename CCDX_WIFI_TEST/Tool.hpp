@@ -3,7 +3,7 @@
  * @date 20.03.2024
  * @author RMSHE
  *
- * < GasSensorOS >
+ * < CCDX_WIFI_TEST >
  * Copyright(C) 2024 RMSHE. All rights reserved.
  *
  * This program is free software : you can redistribute it and /or modify
@@ -41,7 +41,7 @@ public:
 
     // 显示版本信息
     static void displayInfo() {
-        std::cout << "CCDX WIFI TEST - Dev.2024.03.26.Mark4" << std::endl;
+        std::cout << "CCDX WIFI TEST - Dev.2024.03.26.Mark5" << std::endl;
         std::cout << "[AuthorInfo] Powered by RMSHE" << std::endl;
         std::cout << "[OpenSource] https://github.com/RMSHE-MSH/CCDX_WIFI_TEST" << std::endl;
         std::cout << "[LICENSE] GNU AFFERO GENERAL PUBLIC LICENSE Version 3" << std::endl;

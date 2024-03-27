@@ -3,7 +3,7 @@
  * @date 20.03.2024
  * @author RMSHE
  *
- * < GasSensorOS >
+ * < CCDX_WIFI_TEST >
  * Copyright(C) 2024 RMSHE. All rights reserved.
  *
  * This program is free software : you can redistribute it and /or modify
@@ -49,6 +49,9 @@ private:
     // 密码尝试次数(从密码字典中抽取密码进行尝试的次数)
     uint32_t pwdTryNum;
 
+    // 最大无效密码尝试次数(表示一个阈值：如果对某个用户名尝试的密码数量超过设定的阈值而未找到有效密码，程序将停止对该用户名的密码尝试。)
+    uint16_t maxInvalidAttempts;
+
     // 用户名前缀(取决于运营商)
     std::string usernamePrefix;
 
@@ -62,7 +65,8 @@ public:
     // 构造函数: 初始化测试参数
     explicit WIFI_Test(const std::string gen_mode = "m",                                      // 用户名列表生成模式
                        const uint32_t pwdTryNum = 100,                                        // 密码尝试次数
-                       const uint32_t amount = 100,                                           // 需生成的用户名数量
+                       const uint32_t amount = 1000,                                           // 需生成的用户名数量
+                       const uint16_t maxInvalidAttempts = 200,                               // 最大无效密码尝试次数
                        const std::set<uint64_t> usernamesSeed = { 8143086109, 9390026092 },   // 用户名种子
                        const uint64_t maxDecrement = 8,                                       // 生成用户名时随机递减值的最大限度
                        const uint16_t minDelayMs = 0,                                         // 最小延时时间
@@ -72,6 +76,7 @@ public:
         gen_mode(gen_mode),
         pwdTryNum(pwdTryNum),
         amount(amount),
+        maxInvalidAttempts(maxInvalidAttempts),
         usernamesSeed(usernamesSeed),
         maxDecrement(maxDecrement),
         minDelayMs(minDelayMs),
@@ -81,7 +86,13 @@ public:
 
     // 开始执行WIFI账户的有效性测试。
     void runTests() {
-        UsernameGenerator ug(amount, usernamesSeed, usernamePrefix);
+        UsernameGenerator ug(amount, maxInvalidAttempts, usernamesSeed, usernamePrefix);
+
+        // 读取密码字典;
+        dic.readDictionary();
+
+        // 读取无效账号信息;
+        dic.readInvalidAccounts();
 
         /**
          * 生成用户名列表;
@@ -92,12 +103,6 @@ public:
 
         // 打印 UsernameGenerator 的调试信息;
         // ug.printDebugInfo();
-
-        // 读取密码字典;
-        dic.readDictionary();
-
-        // 读取无效账号信息;
-        dic.readInvalidAccounts();
 
         // 获取有效账户的数目
         size_t effectiveAccountAmount = dic.effectiveAccountCount();
@@ -166,9 +171,7 @@ private:
 int main() {
     tl.displayInfo();       // 显示版本信息
 
-    //tl.displayDictionary(); // 显示字典内容
-
-    WIFI_Test test("m", 1, 5000, { 8143086109, 9390026092 }, 8, 0, 0);     // 初始化测试参数
+    WIFI_Test test("m", 10, 1000);     // 初始化测试参数
 
     test.runTests();    // 运行测试
 

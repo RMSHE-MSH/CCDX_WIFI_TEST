@@ -3,7 +3,7 @@
  * @date 05.04.2023
  * @author RMSHE
  *
- * < GasSensorOS >
+ * < CCDX_WIFI_TEST >
  * Copyright(C) 2024 RMSHE. All rights reserved.
  *
  * This program is free software : you can redistribute it and /or modify
