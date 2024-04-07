@@ -25,8 +25,13 @@
 #pragma once
 #include <chrono>
 #include <algorithm>
-#include <ranges>
-#include "DictionaryIndexer.hpp"
+#include <cstdint>
+#include <cstdlib>
+#include <iostream>
+#include <ostream>
+#include <random>
+#include <string>
+#include <thread>
 
 class Tool {
 public:
@@ -41,25 +46,16 @@ public:
 
     // 显示版本信息
     static void displayInfo() {
-        std::cout << "CCDX WIFI TEST - Dev.2024.03.26.Mark5" << std::endl;
+        std::cout << "CCDX WIFI TEST - Dev.2024.03.26.Mark6" << std::endl;
         std::cout << "[AuthorInfo] Powered by RMSHE" << std::endl;
         std::cout << "[OpenSource] https://github.com/RMSHE-MSH/CCDX_WIFI_TEST" << std::endl;
         std::cout << "[LICENSE] GNU AFFERO GENERAL PUBLIC LICENSE Version 3" << std::endl;
 
-        std::cout << "\n[提示]\n1.找到的有效账户储存在程序根目录的\"EffectiveAccount.csv\"文件中;\n2.请将字典文件\"Dictionary.csv\"放到程序根目录中;\n" << std::endl;
+        std::cout << "\n[提示]\n1.找到的有效账户储存在程序根目录的\"EffectiveAccount.csv\"文件中;" <<
+            "\n2.请将字典文件\"Dictionary.csv\"放到程序根目录中;" <<
+            "\n3.无效账户数据储存在程序根目录的 InvalidAccounts.csv 文件中;"
+            << std::endl;
 
-        system("pause");
-    }
-
-    // 显示字典内容
-    void displayDictionary() {
-        system("CLS");
-        DictionaryIndexer dic;
-
-        uint64_t num = 0;
-        for (auto &i : dic.readDictionary("./Dictionary.csv")) std::cout << ++num << "\t" << i << std::endl;
-
-        std::cout << "\n以上是读取到的字典文件内容.\n" << std::endl;
         system("pause");
     }
 
@@ -103,5 +99,32 @@ public:
         }
 
         return result;
+    }
+
+    // 生成一个随机长度的随机字符串的函数
+    // @param minLength 字符串的最小长度
+    // @param maxLength 字符串的最大长度
+    // @return 生成的随机字符串
+    std::string generateRandomString(int minLength, int maxLength) {
+        // 初始化随机数生成器
+        std::random_device rd;
+        std::mt19937 gen(rd());
+
+        // 选择一个随机长度，位于指定的最小和最大长度之间
+        std::uniform_int_distribution<> lengthDistr(minLength, maxLength);
+        int stringLength = lengthDistr(gen);
+
+        // 定义可能的字符集合，包括大小写字母、数字和特殊字符
+        std::string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+
+        // 生成随机字符串
+        std::string randomString;
+        randomString.reserve(stringLength); // 提前为字符串分配足够的空间，提高效率
+        std::uniform_int_distribution<> charDistr(0, static_cast<int>(chars.length() - 1));
+        for (int i = 0; i < stringLength; ++i) {
+            randomString += chars[charDistr(gen)];
+        }
+
+        return randomString;
     }
 };

@@ -18,6 +18,15 @@
     <ClCompile Include="CCDX_WIFI_TEST.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="StringSimilarityEvaluator.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="StringStrengthEvaluator.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PasswordOptimizer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RivestCipher4.hpp">
@@ -36,6 +45,15 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Tool.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="StringSimilarityEvaluator.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="StringStrengthEvaluator.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PasswordOptimizer.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

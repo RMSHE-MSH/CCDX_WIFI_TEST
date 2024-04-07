@@ -21,7 +21,6 @@
  *
  * Electronic Mail : asdfghjkl851@outlook.com
  */
-
 #include <iostream>
 #include "WebRequests.hpp"
 #include "UsernameGenerator.hpp"
@@ -171,7 +170,7 @@ private:
 int main() {
     tl.displayInfo();       // 显示版本信息
 
-    WIFI_Test test("m", 10, 1000);     // 初始化测试参数
+    WIFI_Test test("m", 100, 1000);     // 初始化测试参数
 
     test.runTests();    // 运行测试
 

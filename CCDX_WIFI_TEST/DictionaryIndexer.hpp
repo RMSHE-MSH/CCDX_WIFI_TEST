@@ -25,6 +25,10 @@
 #pragma once
 #include <unordered_set>
 #include "CSV_Operations.hpp"
+#include <unordered_map>
+#include <random>
+
+#include "PasswordOptimizer.h"
 
 class DictionaryIndexer {
 private:
@@ -217,6 +221,9 @@ public:
     // 获取密码字典
     std::unordered_set<std::string> getDictionary() { return passwordDictionary; }
 
+    // 获取无效账户数据结构
+    std::unordered_map<std::string, std::unordered_set<std::string>> getInvalidAccounts() { return invalidAccounts; }
+
     // 获取有效账户的数目
     size_t effectiveAccountCount() { return effectiveAccount.size(); }
 
@@ -224,7 +231,7 @@ public:
     size_t expectedValidPwdCount() { return _passwordDictionary.size(); }
 
     // 获取指定用户名下的无效密码的数量
-    uint32_t invalidPwdCount(const std::string &username) {
+    size_t invalidPwdCount(const std::string &username) {
         // 尝试在无效账户数据结构中查找指定的用户名
         auto it = invalidAccounts.find(username);
         // 如果找到，则返回对应的无效密码的数量

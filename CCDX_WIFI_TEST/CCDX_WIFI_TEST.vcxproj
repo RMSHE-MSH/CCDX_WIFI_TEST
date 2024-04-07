@@ -78,6 +78,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -94,6 +95,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -110,6 +112,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -126,6 +129,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -136,11 +140,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CCDX_WIFI_TEST.cpp" />
+    <ClCompile Include="PasswordOptimizer.cpp" />
+    <ClCompile Include="StringSimilarityEvaluator.cpp" />
+    <ClCompile Include="StringStrengthEvaluator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CSV_Operations.hpp" />
     <ClInclude Include="DictionaryIndexer.hpp" />
+    <ClInclude Include="PasswordOptimizer.h" />
     <ClInclude Include="RivestCipher4.hpp" />
+    <ClInclude Include="StringSimilarityEvaluator.h" />
+    <ClInclude Include="StringStrengthEvaluator.h" />
     <ClInclude Include="Tool.hpp" />
     <ClInclude Include="UsernameGenerator.hpp" />
     <ClInclude Include="WebRequests.hpp" />

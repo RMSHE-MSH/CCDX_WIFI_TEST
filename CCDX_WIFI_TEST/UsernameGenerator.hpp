@@ -29,11 +29,14 @@
 #include <stdexcept>
 #include "Tool.hpp"
 
+#include "DictionaryIndexer.hpp"
+
 Tool tl;
 DictionaryIndexer dic;
 
 class UsernameGenerator {
 private:
+
     // 存储已生成的用户名列表
     std::unordered_set<std::string> usernamesList; // (unordered_set可以保证用户名不重复)
     std::vector<std::string> _usernamesList;       // (vector可以更高效的抽取用户名)
@@ -71,7 +74,7 @@ public:
         currentUsername = maxNum;
 
         // 使用当前时间作为种子初始化随机数生成器
-        unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+        auto seed = std::chrono::system_clock::now().time_since_epoch().count();
         generator.seed(seed);
     }
 
@@ -303,7 +306,7 @@ private:
      */
     uint32_t calculateRadius() {
         // 统计种子数;
-        uint32_t seedCount = usernamesSeed.size();
+        size_t seedCount = usernamesSeed.size();
 
         // 检查种子数量，防止除以0的情况
         if (seedCount <= 0) {
